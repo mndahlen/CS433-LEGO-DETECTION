@@ -9,9 +9,9 @@ im_find_x = np.sum(im_1_channel,0)
 im_find_y = np.sum(im_1_channel,1)
 
 x_low = 0
-x_high = 0
+x_high = 255
 y_low = 0
-y_high = 0
+y_high = 255
 
 idx = 0
 low_found = False
@@ -25,9 +25,6 @@ for i in im_find_x:
             x_high = idx
             break
     idx += 1
-
-if x_high == 0: x_high = 255
-if y_high == 0: y_high = 255
 
 idx = 0
 low_found = False

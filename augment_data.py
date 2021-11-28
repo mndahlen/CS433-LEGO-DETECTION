@@ -3,8 +3,6 @@ import pandas as pd
 import cv2
 import os
 
-# NOTE, this is taken from another repo of mine, need to adjust first.
-
 def flip_horizontal(image):
     return np.flip(image, axis=1)
 
@@ -14,25 +12,25 @@ def add_noise(image, mean, sigma):
 
     return noisy
 
+def gaussian_blur(image, kernel_size = (5,5), sigma=0):
+    blur = cv2.GaussianBlur(img,kernel_size,sigma)
+    return blur
 
+def change_brigthness(img, factor):
+    img = img*factor
+    img[img > 255] = 255
+    return np.uint8(img*factor)
 
-IMGDIR = "hallway_1192_augmented/persons"
+IMGDIR = "data/kaggle/3003"
+img = cv2.imread(os.path.join(IMGDIR,"0001" + ".png"))
+img_flipped = flip_horizontal(img)
+img_noise = add_noise(img, 0, 30)
+img_blur = gaussian_blur(img)
+img_brighter = change_brigthness(img, 1)
 
-labels = pd.read_csv("hallway_1192_augmented/data_labels.csv")
-for index, row in labels.iterrows():
-    imname = row['imname'][:-4]
-    label = row['label']
-    img = cv2.imread(os.path.join(IMGDIR,imname + ".png"))
-    print(imname)
+img_combo = change_brigthness(gaussian_blur(add_noise(img, 0, 30)),0.8)
+cv2.imshow("test",img_combo)
+cv2.waitKey(0) 
 
-    imname_flipped = imname + "_horizontal_flip.png"
-    imname_noise = imname + "_gaussian_0_30.png"
-
-    img_flipped = flip_horizontal(img)
-    img_noise = add_noise(img, 0, 30)
-    labels = labels.append({'imname': imname_flipped, 'label': label}, ignore_index=True)
-    labels = labels.append({'imname': imname_noise, 'label': label}, ignore_index=True)
-    cv2.imwrite(os.path.join(IMGDIR,imname_flipped),img_flipped)
-    cv2.imwrite(os.path.join(IMGDIR,imname_noise),img_noise)
-
-labels.to_csv("hallway_1192_augmented/data_labels_augmented.csv", index=False)
+#closing all open windows 
+cv2.destroyAllWindows() 
