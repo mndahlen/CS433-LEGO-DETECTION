@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-im = cv2.imread('data\kaggle\\3003\\0397.png')
+im = cv2.imread('data\kaggle\\3004\\0001.png')
 
 # Get bbox of image (We expect everything but lego to be black, I.E 0 intensity)
 im_1_channel = np.sum(im,2)

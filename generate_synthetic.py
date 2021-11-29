@@ -36,11 +36,13 @@ for label in composition:
         filename = num_to_namestring(rnd_index) + ".png"
         path = os.path.join(DATADIR,"kaggle",label,filename)
         bbox = bboxes.loc[(bboxes['filename'] == filename) & (bboxes['label'] == int(label))]
+        img = cv2.imread(path)
         x_low = int(bbox["x_low"]*lego_scale_factor)
         y_low = int(bbox["y_low"]*lego_scale_factor)
         x_high = int(bbox["x_high"]*lego_scale_factor)
         y_high = int(bbox["y_high"]*lego_scale_factor)
-
-        print(x_low,y_low,x_high,y_high)
+        cv2.imshow("test",img)
+        cv2.waitKey(0) 
+cv2.destroyAllWindows() 
 
 
