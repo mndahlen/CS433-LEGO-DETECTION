@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 ## To avoid overwriting ##
-save = False
+save = True
 ##########################
 
 DATADIR = "data/kaggle" 
@@ -17,9 +17,9 @@ def get_bbox(im):
     im_find_y = np.sum(im_1_channel,1)
 
     x_low = 0
-    x_high = 255
+    x_high = 199
     y_low = 0
-    y_high = 255
+    y_high = 199
 
     idx = 0
     low_found = False

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-im = cv2.imread('data\kaggle\\3004\\0001.png')
+im = cv2.imread('data/kaggle/3003/0180.png')
 
 # Get bbox of image (We expect everything but lego to be black, I.E 0 intensity)
 im_1_channel = np.sum(im,2)
@@ -9,9 +9,9 @@ im_find_x = np.sum(im_1_channel,0)
 im_find_y = np.sum(im_1_channel,1)
 
 x_low = 0
-x_high = 255
+x_high = 199
 y_low = 0
-y_high = 255
+y_high = 199
 
 idx = 0
 low_found = False
