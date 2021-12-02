@@ -3,47 +3,65 @@ import numpy as np
 import pandas as pd
 import os
 import random
+from generate_synthetic import num_to_namestring
+import csv
 import augment_data
-DATADIR = "data"
-BACKGROUNDIR = "backgrounds"
- 
+## Program for generating dataset
 
-def num_to_namestring(num):
-    if num < 10:
-        return "000{}".format(num)
-    
-    if num < 100:
-        return "00{}".format(num)
-    
-    if num < 1000:
-        return "0{}".format(num)
-    
-    if num < 10000:
-        return "{}".format(num)
+# Directions for getting data
+DATADIR = "data/kaggle" 
+DIRS = ["3003","3004","3022","3023"]
 
-background = cv2.imread(os.path.join(DATADIR,BACKGROUNDIR,"grass.jpeg"))
-background = cv2.resize(background, (600, 400), interpolation=cv2.INTER_AREA)
-back_width = background.shape[1]
-back_height = background.shape[0]
-composition = {"3003":15,"3004":20,"3022":0,"3023":10} # currently 0 for 3022 cuz filenames bad
-max_index = 400
+WRITEDIR = "data/syntetic_dataset/images"
+LABELCSV = "data/syntetic_dataset/labels/labels.csv"
+FORMAT = ".jpeg"
 
+# Size of images in the dataset
+WIDTH = 600
+HIGTH = 400
+
+# Specifications for the dataset
+MIN_PER_IMAGE = 0
+MAX_PER_IMAGE = 10
+
+# Path to bouding boxes
 bboxes = pd.read_csv("data/test/kaggle_bbox.csv")
-# All bounding boxes for one image, in the form (label, x_low, y_low, x_high, y_high)
+
+
+def write_to_file(image, name, label_boxes):
+
+    # Save the image to the correct place
+    filename = name + FORMAT
+    cv2.imwrite(os.path.join(WRITEDIR,filename), image)
+
+    # Add in csv all labels and boxes in this image
+    with open(LABELCSV, 'w', newline=' ') as csvfile:
+        writer = csv.writer(csvfile, delimiter=' ')
+
+        for box in label_boxes:
+            writer.writerow(box)
 
 # Function for generation one image
-def generate_image(background, composition, colour="grey"):
+def generate_image_from_list(background, images, colour="grey"):
+
+    # Size of background
+    back_width = background.shape[1]
+    back_height = background.shape[0]
+    max_index = 400
 
     # Percentage overlap in x- resp y- directions
     max_overlap = 0
     boxes = []
-    for label in composition:
-        for i in range(1,composition[label] + 1):
+    for image in images:
             lego_scale_factor = random.uniform(0.2, 0.5)
+
+            # Find random image of the specific piece
             rnd_index = random.randint(1, max_index)
             filename = num_to_namestring(rnd_index) + ".png"
-            path = os.path.join(DATADIR,"kaggle",label,filename)
-            bbox = bboxes.loc[(bboxes['filename'] == filename) & (bboxes['label'] == int(label))]
+
+            path = os.path.join(DATADIR,image,filename)
+
+            bbox = bboxes.loc[(bboxes['filename'] == filename) & (bboxes['label'] == int(image))]
             img = cv2.imread(path)
 
             # Scale image
@@ -108,29 +126,22 @@ def generate_image(background, composition, colour="grey"):
             y_high = y_high + offset_y - y_low
             x_low = offset_x 
             y_low = offset_y
-            boxes.append([label, x_low, y_low, x_high, y_high])
-
-    # Do things with the finished image to make it look less syntetic
-    noise_mean = random.randint(-5, 5)
-    noise_std = random.randint(0, 20)
-    blur_kernel = random.randint(3, 10)
-    background = augment_data.add_noise(background, noise_mean, noise_std)
-    background = augment_data.blur(background, (blur_kernel, blur_kernel))
-
+            boxes.append([image, x_low, y_low, x_high, y_high])
     return background, boxes
 
 
-background, boxes = generate_image(background, composition, colour="random")
-cv2.imshow("back", background)
-cv2.waitKey(0) 
-cv2.destroyAllWindows() 
+# List of backgrounds as strings
+# List of images as strings
+def build_dataset(backgrounds, back_format, images, img_format, size):
 
-show_img = background.copy()
+    # For each image we want to construct
+    for i in range(size):
+        
+        # Pick a random background
+        back = random.choice(backgrounds)
 
-for box in boxes:
-    #print(box)
-    show_img = cv2.rectangle(show_img, (int(box[1]), int(box[2])), (int(box[3]), int(box[4])), (255, 0, 0), 2)
+        # Select pieces at random for this image
+        num_of_elements = random.randint(MIN_PER_IMAGE, MAX_PER_IMAGE)
+        elements = random.choices(images, num_of_elements)
 
-cv2.imshow("With boxes", show_img)
-cv2.waitKey(0) 
-cv2.destroyAllWindows() 
+
