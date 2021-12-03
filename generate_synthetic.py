@@ -20,7 +20,7 @@ def num_to_namestring(num):
     
     if num < 10000:
         return "{}".format(num)
-
+'''
 background = cv2.imread(os.path.join(DATADIR,BACKGROUNDIR,"grass.jpeg"))
 background = cv2.resize(background, (600, 400), interpolation=cv2.INTER_AREA)
 back_width = background.shape[1]
@@ -134,3 +134,4 @@ for box in boxes:
 cv2.imshow("With boxes", show_img)
 cv2.waitKey(0) 
 cv2.destroyAllWindows() 
+'''

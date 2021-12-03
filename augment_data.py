@@ -46,13 +46,13 @@ def change_colour(img, colour_add):
     #cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR_FULL, dst=img_hsv)
     return img_hsv
 
-IMGDIR = "data/kaggle/3003"
-img = cv2.imread(os.path.join(IMGDIR,"0001" + ".png"))
-img_flipped = flip_horizontal(img)
-img_noise = add_noise(img, 0, 30)
-img_blur = gaussian_blur(img)
-img_brighter = change_brigthness(img, 1.2)
-img_colour = change_colour(img, [200, 50, 0])
+#IMGDIR = "data/kaggle/3003"
+#img = cv2.imread(os.path.join(IMGDIR,"0001" + ".png"))
+#img_flipped = flip_horizontal(img)
+#img_noise = add_noise(img, 0, 30)
+#img_blur = gaussian_blur(img)
+#img_brighter = change_brigthness(img, 1.2)
+#img_colour = change_colour(img, [200, 50, 0])
 
 #closing all open windows 
 #cv2.destroyAllWindows() 

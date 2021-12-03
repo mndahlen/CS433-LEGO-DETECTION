@@ -17,9 +17,9 @@ def get_bbox(im):
     im_find_y = np.sum(im_1_channel,1)
 
     x_low = 0
-    x_high = 199
+    x_high = im.shape[1]
     y_low = 0
-    y_high = 199
+    y_high = im.shape[0]
 
     idx = 0
     low_found = False
@@ -55,6 +55,19 @@ for dir in DIRS:
         if filename.endswith(".png"): 
             print("dir:{}, file:{}".format(dir,filename))
             img = cv2.imread(os.path.join(DATADIR,dir,filename))
+            bbox = get_bbox(img)
+            bbox_frame = bbox_frame.append({"filename":filename,"label":dir,
+                                            "x_low":bbox[0],"y_low":bbox[1],
+                                            "x_high":bbox[2],"y_high":bbox[3]}, ignore_index=True)
+
+# Add also all raw images
+RAW_DIRS = ["2540", "3001", "3003", "3004", "3020", "3021", "3022", "3023", "3039", "3660"]
+RAW_DATADIR = "data/raw_bricks"
+for dir in RAW_DIRS:
+    for filename in os.listdir(os.path.join(RAW_DATADIR,dir)):
+        if filename.endswith(".jpg"): 
+            print("dir:{}, file:{}".format(dir,filename))
+            img = cv2.imread(os.path.join(RAW_DATADIR,dir,filename))
             bbox = get_bbox(img)
             bbox_frame = bbox_frame.append({"filename":filename,"label":dir,
                                             "x_low":bbox[0],"y_low":bbox[1],
