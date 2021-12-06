@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 import os
 import random
-import augment_data
-DATADIR = "data"
+
+DATADIR = "data_generation"
 BACKGROUNDIR = "backgrounds"
  
 
@@ -62,6 +62,7 @@ def generate_image(background, composition, colour="grey"):
             else:
                 img = augment_data.change_colour(img, colour)
 
+bboxes = pd.read_csv("data_generation/test/kaggle_bbox.csv")
 
             #img = augment_data.add_noise(img, 0, 30)
             # Scale bounding boxes
