@@ -66,12 +66,12 @@ def change_colour(img, colour_add):
 
 IMGDIR = "data/kaggle/3003"
 img = cv2.imread(os.path.join(IMGDIR,"0001" + ".png"))
-img_flipped = flip_horizontal(img)
-img_noise = add_noise(img, 0, 30)
-img_blur = gaussian_blur(img)
-img_brighter = change_brigthness(img, 1.2)
-img_colour = change_colour(img, [200, 50, 0])
-img_mb = motion_blur(img, "vertical")
+# img_flipped = flip_horizontal(img)
+# img_noise = add_noise(img, 0, 30)
+# img_blur = gaussian_blur(img)
+# img_brighter = change_brigthness(img, 1.2)
+# img_colour = change_colour(img, [200, 50, 0])
+img_mb = add_noise(motion_blur(img, "vertical", factor=10),0,10)
 
 cv2.imshow("image",img_mb)
 cv2.waitKey(0)
