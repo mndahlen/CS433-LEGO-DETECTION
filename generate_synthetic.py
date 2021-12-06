@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import random
 
-DATADIR = "data"
+DATADIR = "data_generation"
 BACKGROUNDIR = "backgrounds"
  
 
@@ -26,7 +26,7 @@ background = cv2.imread(os.path.join(DATADIR,BACKGROUNDIR,"lena.png"))
 composition = {"3003":5,"3004":1,"3022":0,"3023":1} # currently 0 for 3022 cuz filenames bad
 max_index = 400
 
-bboxes = pd.read_csv("data/test/kaggle_bbox.csv")
+bboxes = pd.read_csv("data_generation/test/kaggle_bbox.csv")
 
 lego_scale_factor = 0.2
 

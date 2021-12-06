@@ -40,7 +40,7 @@ def change_colour(img, colour_add):
     #img_hsv = cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR_FULL)
     return img_hsv
 
-IMGDIR = "data/kaggle/3003"
+IMGDIR = "data_generation/kaggle/3003"
 img = cv2.imread(os.path.join(IMGDIR,"0001" + ".png"))
 img_flipped = flip_horizontal(img)
 img_noise = add_noise(img, 0, 30)

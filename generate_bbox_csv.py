@@ -7,7 +7,7 @@ import os
 save = False
 ##########################
 
-DATADIR = "data/kaggle" 
+DATADIR = "data_generation/kaggle"
 DIRS = ["3003","3004","3022","3023"]
 
 def get_bbox(im):
@@ -61,5 +61,5 @@ for dir in DIRS:
                                             "x_high":bbox[2],"y_high":bbox[3]}, ignore_index=True)
 
 if save:
-    bbox_frame.to_csv("data/test/kaggle_bbox.csv", index=False)
+    bbox_frame.to_csv("data_generation/test/kaggle_bbox.csv", index=False)
 
