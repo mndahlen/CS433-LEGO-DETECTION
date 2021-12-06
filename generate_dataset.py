@@ -64,10 +64,7 @@ def generate_image_from_list(background_name, images, colour="grey"):
             else:
                 colour = "random"
                 rnd_index = random.randint(1, max_index)
-
-                if(image == "3022"):
-                    filename = num_to_namestring(rnd_index) + ".png"
-
+                filename = num_to_namestring(rnd_index) + ".png"
                 path = os.path.join(DATADIR_KAGGLE,image,filename)
 
             bbox = bboxes.loc[(bboxes['filename'] == filename) & (bboxes['label'] == int(image))]
