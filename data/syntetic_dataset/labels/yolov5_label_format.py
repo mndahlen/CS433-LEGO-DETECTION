@@ -4,9 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 
-
 def create_txt_annotations():
-	labels = pd.read_csv('/Users/antoineescoyez/Desktop/cs433/CS433-PROJ2-ALAEMD/data/syntetic_dataset/labels/labels.csv')
+	labels = pd.read_csv('data/syntetic_dataset/labels/labels.csv')
 
 	# yolov5 needs .txt file for each image with one line per bounding box
 	# each line must be in the following format: [category integer 0 indexed] x_center y_center width height
@@ -22,7 +21,7 @@ def create_txt_annotations():
 	entries = ['Label', 'x_center', 'y_center', 'width', 'height']
 	for image_name in np.unique(labels['Image name']):
 		img_df = labels[labels['Image name'] == image_name][entries]
-		np.savetxt('/Users/antoineescoyez/Desktop/cs433/CS433-PROJ2-ALAEMD/data/syntetic_dataset/txt_labels_yolov5/{}.txt'.format(image_name.replace('.jpeg', '')), img_df.values, fmt=['%d', '%f', '%f', '%f', '%f'])
+		np.savetxt('data/syntetic_dataset/txt_labels_yolov5/{}.txt'.format(image_name.replace('.jpeg', '')), img_df.values, fmt=['%d', '%f', '%f', '%f', '%f'])
 
 
 create_txt_annotations()
@@ -54,14 +53,14 @@ def plot_bounding_box(image, annotation_list, classes):
 img_number = 3
 
 # get annotation file
-annotation_file = '/Users/antoineescoyez/Desktop/cs433/CS433-PROJ2-ALAEMD/data/syntetic_dataset/txt_labels_yolov5/{}.txt'.format(img_number)
+annotation_file = 'data/syntetic_dataset/txt_labels_yolov5/{}.txt'.format(img_number)
 with open(annotation_file, "r") as file:
 	annotation_list = file.read().split("\n")[:-1]
 	annotation_list = [x.split(" ") for x in annotation_list]
 	annotation_list = [[float(y) for y in x] for x in annotation_list]
 
 # get the corresponding image file
-image_file = '/Users/antoineescoyez/Desktop/cs433/CS433-PROJ2-ALAEMD/data/syntetic_dataset/images/{}.jpeg'.format(img_number)
+image_file = 'data/syntetic_dataset/images/{}.jpeg'.format(img_number)
 assert os.path.exists(image_file)
 
 # load the image
