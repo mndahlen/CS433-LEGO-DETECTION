@@ -6,6 +6,7 @@ import random
 from generate_synthetic import BACKGROUNDIR, num_to_namestring
 import csv
 import augment_data
+from generate_bbox_csv import get_bbox
 ## Program for generating dataset
 
 # Directions for getting data
@@ -39,7 +40,7 @@ def write_to_file(image, filename):
 
 
 # Function for generation one image
-def generate_image_from_list(background_name, images, colour="grey"):
+def generate_image_from_list(background_name, images, colour="grey", kaggle_ratio=KAGGLE_RATIO, bbx_gen="preprocess", noise_mean=0, noise_std=0, motion_blur_factor=0, motion_blur_dir="horizontal"):
     background = cv2.imread(os.path.join(BACKDIR,background_name))
     background = cv2.resize(background, (WIDTH, HIGTH), interpolation=cv2.INTER_AREA)
     back_width = WIDTH
@@ -51,10 +52,11 @@ def generate_image_from_list(background_name, images, colour="grey"):
     boxes = []
     for image in images:
             # Find random image of the specific piece
-            take_kaggle = random.randint(0, KAGGLE_RATIO)
+            take_kaggle = random.randint(0, kaggle_ratio)
      
             if(take_kaggle == 0):
                 # Pick raw image
+                colour = "grey"
                 filename = random.choice(os.listdir(os.path.join(DATADIR_RAW,image)))
                 # Unnice solution, will solve this better later
                 while (filename == 'uncut'):
@@ -62,16 +64,14 @@ def generate_image_from_list(background_name, images, colour="grey"):
                 
                 path = os.path.join(DATADIR_RAW,image,filename)
             else:
-                colour = "random"
                 rnd_index = random.randint(1, max_index)
                 filename = num_to_namestring(rnd_index) + ".png"
                 path = os.path.join(DATADIR_KAGGLE,image,filename)
 
-            bbox = bboxes.loc[(bboxes['filename'] == filename) & (bboxes['label'] == int(image))]
             img = cv2.imread(path)
 
             # Scale image. Want random between maybe 1/20 and 1/5 of image size? 
-            lego_height = random.randint(int(HIGTH/15), int(HIGTH/3))
+            lego_height = random.randint(int(HIGTH/15), int(HIGTH/5))
             lego_scale_factor = lego_height/img.shape[0]
             lego_width = int(lego_scale_factor*img.shape[1])
 
@@ -79,7 +79,23 @@ def generate_image_from_list(background_name, images, colour="grey"):
 
             # Augment lego piece
             img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+            
+            # Use preporcessed bounding boxes. Should be fastest, but we can not get arbitrary rotation
+            if (bbx_gen=="preprocess"):
+                bbox = bboxes.loc[(bboxes['filename'] == filename) & (bboxes['label'] == int(image))] 
+                # Scale bounding boxes
+                x_low = int(bbox["x_low"]*lego_scale_factor)
+                y_low = int(bbox["y_low"]*lego_scale_factor)
+                x_high = int(bbox["x_high"]*lego_scale_factor)
+                y_high = int(bbox["y_high"]*lego_scale_factor)
 
+            elif (bbx_gen=="rotate_image"):
+                # Add choice for rotation
+                degree = random.randint(0, 360)
+                img = augment_data.rotate(img, degree)
+                # Call bbox generation for getting the new bounding box for this rotation
+                x_low, y_low, x_high, y_high = generate_bbox_csv.get_bbox(img)
+            
             # Select colour from input. Either noo change, random colour or choose a colour
             if (colour == "random"):
                 img = augment_data.change_colour(img, np.random.randint(0, 255, size=3))
@@ -88,11 +104,6 @@ def generate_image_from_list(background_name, images, colour="grey"):
             else:
                 img = augment_data.change_colour(img, colour)
 
-            # Scale bounding boxes
-            x_low = int(bbox["x_low"]*lego_scale_factor)
-            y_low = int(bbox["y_low"]*lego_scale_factor)
-            x_high = int(bbox["x_high"]*lego_scale_factor)
-            y_high = int(bbox["y_high"]*lego_scale_factor)
 
             # Make sure the whole box is within background (could change later if we want half pieces)
             # Note: offset for bounding box
@@ -136,10 +147,9 @@ def generate_image_from_list(background_name, images, colour="grey"):
     # Always blur a little to remove lines between background and lego pieces
     background = augment_data.blur(background)
 
-    # Some randnoise_
-    noise_mean = random.randint(-3, 3)
-    noise_std = random.randint(0, 10)
+    # Add desired noise and motion blur
     background = augment_data.add_noise(background, noise_mean, noise_std)
+    background = augment_data.motion_blur(background, motion_blur_dir, motion_blur_factor)
 
     return background, boxes
 
@@ -153,6 +163,9 @@ def build_dataset(backgrounds, images, size):
         num_of_elements = random.randint(MIN_PER_IMAGE, MAX_PER_IMAGE)
         elements = random.choices(images, k=num_of_elements)
 
+            # Some randnoise_
+        noise_mean = random.randint(-3, 3)
+        noise_std = random.randint(0, 10)
         image, boxes = generate_image_from_list(background, elements, colour="grey")
         filename = str(i) + FORMAT
         write_to_file(image, filename)
@@ -170,7 +183,7 @@ def build_dataset(backgrounds, images, size):
 
 images = ["3003", "3004", "3022", "3023"]
 backgrounds = os.listdir(BACKDIR)
-build_dataset(backgrounds, images, 1000)
+build_dataset(backgrounds, images, 10)
 
 #cv2.imshow("result", img)
 #cv2.waitKey(0)

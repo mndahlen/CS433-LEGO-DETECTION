@@ -63,7 +63,7 @@ def change_colour(img, colour_add):
     #print(img_hsv[100])
     #cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR_FULL, dst=img_hsv)
     return img_hsv
-
+'''
 IMGDIR = "data_generation/kaggle/3003"
 img = cv2.imread(os.path.join(IMGDIR,"0001" + ".png"))
 img_flipped = flip_horizontal(img)
@@ -78,3 +78,4 @@ cv2.waitKey(0)
 
 #closing all open windows 
 cv2.destroyAllWindows() 
+'''

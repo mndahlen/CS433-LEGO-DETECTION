@@ -4,10 +4,10 @@ import pandas as pd
 import os
 
 ## To avoid overwriting ##
-save = True
+save = False
 ##########################
 
-DATADIR = "data_generation/kaggle"
+DATADIR = "data/kaggle"
 DIRS = ["3003","3004","3022","3023"]
 
 def get_bbox(im):
@@ -48,7 +48,7 @@ def get_bbox(im):
         idx += 1
 
     return (x_low,y_low,x_high,y_high)
-
+'''
 bbox_frame = pd.DataFrame(columns=["filename","label","x_low","y_low","x_high","y_high"])
 for dir in DIRS:
     for filename in os.listdir(os.path.join(DATADIR,dir)):
@@ -65,7 +65,7 @@ RAW_DIRS = ["2540", "3001", "3003", "3004", "3020", "3021", "3022", "3023", "303
 RAW_DATADIR = "data/raw_bricks"
 for dir in RAW_DIRS:
     for filename in os.listdir(os.path.join(RAW_DATADIR,dir)):
-        if filename.endswith(".jpg"): 
+        if filename.endswith(".png"): 
             print("dir:{}, file:{}".format(dir,filename))
             img = cv2.imread(os.path.join(RAW_DATADIR,dir,filename))
             bbox = get_bbox(img)
@@ -74,5 +74,6 @@ for dir in RAW_DIRS:
                                             "x_high":bbox[2],"y_high":bbox[3]}, ignore_index=True)
 
 if save:
-    bbox_frame.to_csv("data_generation/test/kaggle_bbox.csv", index=False)
+    bbox_frame.to_csv("data/test/kaggle_bbox.csv", index=False)
 
+'''
