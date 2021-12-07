@@ -3,13 +3,14 @@ import numpy as np
 import pandas as pd
 import os
 import random
-from generate_synthetic import BACKGROUNDIR, num_to_namestring
 import csv
-import augment_data
-## Program for generating dataset
 
-# Directions for getting data
+# Custom modules
+import helpers as helper
+
+# Directories
 DATADIR_KAGGLE = "data/kaggle" 
+BACKGROUNDIR = "backgrounds"
 DIRS_KAGGLE = ["3003","3004","3022","3023"]
 DATADIR_RAW = "data/raw_bricks"
 DIRS_RAW = ["2540", "3001", "3003", "3004", "3020", "3021", "3022", "3023", "3039", "3660"]
@@ -29,14 +30,12 @@ MAX_PER_IMAGE = 50
 # Ratio between kaggle and real
 KAGGLE_RATIO = 10
 
-# Path to bouding boxes
-bboxes = pd.read_csv("data/test/kaggle_bbox.csv")
+# Path to bounding boxes
+BBOX = pd.read_csv("data/test/kaggle_bbox.csv")
 
 
 def write_to_file(image, filename):
     cv2.imwrite(os.path.join(WRITEDIR,filename), image)
-
-
 
 # Function for generation one image
 def generate_image_from_list(background_name, images, colour="grey"):
@@ -64,10 +63,10 @@ def generate_image_from_list(background_name, images, colour="grey"):
             else:
                 colour = "random"
                 rnd_index = random.randint(1, max_index)
-                filename = num_to_namestring(rnd_index) + ".png"
+                filename = helper.num_to_namestring(rnd_index) + ".png"
                 path = os.path.join(DATADIR_KAGGLE,image,filename)
 
-            bbox = bboxes.loc[(bboxes['filename'] == filename) & (bboxes['label'] == int(image))]
+            bbox = BBOX.loc[(BBOX['filename'] == filename) & (BBOX['label'] == int(image))]
             img = cv2.imread(path)
 
             # Scale image. Want random between maybe 1/20 and 1/5 of image size? 
@@ -80,13 +79,13 @@ def generate_image_from_list(background_name, images, colour="grey"):
             # Augment lego piece
             img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
 
-            # Select colour from input. Either noo change, random colour or choose a colour
+            # Select colour from input. Either no change, random colour or choose a colour
             if (colour == "random"):
-                img = augment_data.change_colour(img, np.random.randint(0, 255, size=3))
+                img = helper.change_colour(img, np.random.randint(0, 255, size=3))
             elif (colour == "grey"):
                 print("grey")
             else:
-                img = augment_data.change_colour(img, colour)
+                img = helper.change_colour(img, colour)
 
             # Scale bounding boxes
             x_low = int(bbox["x_low"]*lego_scale_factor)
@@ -134,12 +133,12 @@ def generate_image_from_list(background_name, images, colour="grey"):
             boxes.append([image, x_low, y_low, x_high, y_high])
     
     # Always blur a little to remove lines between background and lego pieces
-    background = augment_data.blur(background)
+    background = helper.blur(background)
 
     # Some randnoise_
     noise_mean = random.randint(-3, 3)
     noise_std = random.randint(0, 10)
-    background = augment_data.add_noise(background, noise_mean, noise_std)
+    background = helper.add_noise(background, noise_mean, noise_std)
 
     return background, boxes
 
