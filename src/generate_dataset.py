@@ -4,12 +4,9 @@ import pandas as pd
 import os
 import random
 import csv
-<<<<<<< HEAD:generate_dataset.py
 import augment_data
-from generate_bbox_csv import get_bbox
+from generate_brick_bbox import get_bbox
 ## Program for generating dataset
-=======
->>>>>>> 67200303c25f9f269b9f138299c8df27ff6d8b31:src/generate_dataset.py
 
 # Custom modules
 import helpers as helper
@@ -37,7 +34,7 @@ MAX_PER_IMAGE = 50
 KAGGLE_RATIO = 10
 
 # Path to bounding boxes
-BBOX = pd.read_csv("data/test/kaggle_bbox.csv")
+bbox = pd.read_csv("data/test/kaggle_bbox.csv")
 
 
 def write_to_file(image, filename):
@@ -72,10 +69,6 @@ def generate_image_from_list(background_name, images, colour="grey", kaggle_rati
                 filename = helper.num_to_namestring(rnd_index) + ".png"
                 path = os.path.join(DATADIR_KAGGLE,image,filename)
 
-<<<<<<< HEAD:generate_dataset.py
-=======
-            bbox = BBOX.loc[(BBOX['filename'] == filename) & (BBOX['label'] == int(image))]
->>>>>>> 67200303c25f9f269b9f138299c8df27ff6d8b31:src/generate_dataset.py
             img = cv2.imread(path)
 
             # Scale image. Want random between maybe 1/20 and 1/5 of image size? 
@@ -87,7 +80,6 @@ def generate_image_from_list(background_name, images, colour="grey", kaggle_rati
 
             # Augment lego piece
             img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
-<<<<<<< HEAD:generate_dataset.py
             
             # Use preporcessed bounding boxes. Should be fastest, but we can not get arbitrary rotation
             if (bbx_gen=="preprocess"):
@@ -103,13 +95,9 @@ def generate_image_from_list(background_name, images, colour="grey", kaggle_rati
                 degree = random.randint(0, 360)
                 img = augment_data.rotate(img, degree)
                 # Call bbox generation for getting the new bounding box for this rotation
-                x_low, y_low, x_high, y_high = generate_bbox_csv.get_bbox(img)
+                x_low, y_low, x_high, y_high = generate_brick_bbox.get_bbox(img)
             
             # Select colour from input. Either noo change, random colour or choose a colour
-=======
-
-            # Select colour from input. Either no change, random colour or choose a colour
->>>>>>> 67200303c25f9f269b9f138299c8df27ff6d8b31:src/generate_dataset.py
             if (colour == "random"):
                 img = helper.change_colour(img, np.random.randint(0, 255, size=3))
             elif (colour == "grey"):
@@ -160,16 +148,9 @@ def generate_image_from_list(background_name, images, colour="grey", kaggle_rati
     # Always blur a little to remove lines between background and lego pieces
     background = helper.blur(background)
 
-<<<<<<< HEAD:generate_dataset.py
     # Add desired noise and motion blur
     background = augment_data.add_noise(background, noise_mean, noise_std)
     background = augment_data.motion_blur(background, motion_blur_dir, motion_blur_factor)
-=======
-    # Some randnoise_
-    noise_mean = random.randint(-3, 3)
-    noise_std = random.randint(0, 10)
-    background = helper.add_noise(background, noise_mean, noise_std)
->>>>>>> 67200303c25f9f269b9f138299c8df27ff6d8b31:src/generate_dataset.py
 
     return background, boxes
 
