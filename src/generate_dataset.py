@@ -4,18 +4,18 @@ import pandas as pd
 import os
 import random
 import csv
-import augment_data
-from generate_brick_bbox import get_bbox
+#import augment_data as augment_data
+#import generate_brick_bbox as generate_brick_bbox
 ## Program for generating dataset
 
 # Custom modules
 import helpers as helper
 
 # Directories
-DATADIR_KAGGLE = "data/kaggle" 
-BACKGROUNDIR = "backgrounds"
+DATADIR_KAGGLE = "data/bricks_3D" 
+BACKGROUNDIR = "data/backgrounds"
 DIRS_KAGGLE = ["3003","3004","3022","3023"]
-DATADIR_RAW = "data/raw_bricks"
+DATADIR_RAW = "data/bricks_photo"
 DIRS_RAW = ["2540", "3001", "3003", "3004", "3020", "3021", "3022", "3023", "3039", "3660"]
 BACKDIR = "data/backgrounds"
 WRITEDIR = "data/syntetic_dataset/images"
@@ -41,8 +41,7 @@ def write_to_file(image, filename):
     cv2.imwrite(os.path.join(WRITEDIR,filename), image)
 
 # Function for generation one image
-def generate_image_from_list(background_name, images, colour="grey", kaggle_ratio=KAGGLE_RATIO, bbx_gen="preprocess", noise_mean=0, noise_std=0, motion_blur_factor=0, motion_blur_dir="horizontal"):
-    background = cv2.imread(os.path.join(BACKDIR,background_name))
+def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAGGLE_RATIO, bbx_gen="preprocess", noise_mean=0, noise_std=0, motion_blur_factor=1, motion_blur_dir="horizontal"):
     background = cv2.resize(background, (WIDTH, HIGTH), interpolation=cv2.INTER_AREA)
     back_width = WIDTH
     back_height = HIGTH
@@ -83,7 +82,7 @@ def generate_image_from_list(background_name, images, colour="grey", kaggle_rati
             
             # Use preporcessed bounding boxes. Should be fastest, but we can not get arbitrary rotation
             if (bbx_gen=="preprocess"):
-                bbox = bboxes.loc[(bboxes['filename'] == filename) & (bboxes['label'] == int(image))] 
+                bbox = bbox.loc[(bbox['filename'] == filename) & (bbox['label'] == int(image))] 
                 # Scale bounding boxes
                 x_low = int(bbox["x_low"]*lego_scale_factor)
                 y_low = int(bbox["y_low"]*lego_scale_factor)
@@ -93,9 +92,9 @@ def generate_image_from_list(background_name, images, colour="grey", kaggle_rati
             elif (bbx_gen=="rotate_image"):
                 # Add choice for rotation
                 degree = random.randint(0, 360)
-                img = augment_data.rotate(img, degree)
+                img = helper.rotate(img, degree)
                 # Call bbox generation for getting the new bounding box for this rotation
-                x_low, y_low, x_high, y_high = generate_brick_bbox.get_bbox(img)
+                x_low, y_low, x_high, y_high = helper.get_bbox(img)
             
             # Select colour from input. Either noo change, random colour or choose a colour
             if (colour == "random"):
@@ -146,20 +145,21 @@ def generate_image_from_list(background_name, images, colour="grey", kaggle_rati
             boxes.append([image, x_low, y_low, x_high, y_high])
     
     # Always blur a little to remove lines between background and lego pieces
-    background = helper.blur(background)
+    #background = helper.blur(background)
 
     # Add desired noise and motion blur
-    background = augment_data.add_noise(background, noise_mean, noise_std)
-    background = augment_data.motion_blur(background, motion_blur_dir, motion_blur_factor)
+    background = helper.add_noise(background, noise_mean, noise_std)
+    background = helper.motion_blur(background, motion_blur_dir, motion_blur_factor)
 
     return background, boxes
 
 
 # List of backgrounds as strings
 # List of images as strings
-def build_dataset(backgrounds, images, size):
+def build_random_dataset(backgrounds, images, size_random, idx=0):
     label_boxes = pd.DataFrame(columns=["Image name", "Label", "X-low", "Y-low", "X-high", "Y-high"])
-    for i in range(size):
+    # Random images
+    for i in range(size_random):
         background = random.choice(backgrounds)
         num_of_elements = random.randint(MIN_PER_IMAGE, MAX_PER_IMAGE)
         elements = random.choices(images, k=num_of_elements)
@@ -167,8 +167,9 @@ def build_dataset(backgrounds, images, size):
             # Some randnoise_
         noise_mean = random.randint(-3, 3)
         noise_std = random.randint(0, 10)
+        background = cv2.imread(os.path.join(BACKDIR,background))
         image, boxes = generate_image_from_list(background, elements, colour="grey")
-        filename = str(i) + FORMAT
+        filename = str(idx) + FORMAT
         write_to_file(image, filename)
         for box in boxes:
             label_boxes = label_boxes.append({"Image name":filename,"Label":box[0],
@@ -177,14 +178,37 @@ def build_dataset(backgrounds, images, size):
 
         if (i % 100 == 0):
             print("Image number: " + str(i) + " finished")
+
+        # Always increment index to get unique images
+        idx += 1
     label_boxes.to_csv(LABELCSV, index=False)
-    
 
+    # To make more datasets we must return index
+    return idx, label_boxes
 
+# Just images of pieces on black background
+def build_simple_dataset(images, size_simple, min_pieces=1, max_pieces=1, mix_pieces=False, idx=0):
+    piece_idx = 0
+    background = np.zeros((WIDTH, HIGTH, 3), dtype = "uint8")
+    for i in range(size_simple):
+        num_of_pieces = random.randint(min_pieces, max_pieces)
+        if (mix_pieces):
+            elements = random.choices(images, k=num_of_pieces)
+        else:
+            elements = [images[piece_idx]]*num_of_pieces
+            piece_idx = (piece_idx + 1)%len(images)
+        # Generate images
+        
+        image, boxes = generate_image_from_list(background, elements, colour="grey", kaggle_ratio=10, bbx_gen="rotate_image")
 
+        cv2.imshow("result", image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows() 
 images = ["3003", "3004", "3022", "3023"]
 backgrounds = os.listdir(BACKDIR)
-build_dataset(backgrounds, images, 10)
+build_simple_dataset(images, 10, max_pieces=10)
+#build_random_dataset(backgrounds, images, 10)
+
 
 #cv2.imshow("result", img)
 #cv2.waitKey(0)

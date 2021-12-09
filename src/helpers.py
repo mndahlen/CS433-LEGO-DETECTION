@@ -37,11 +37,11 @@ def motion_blur(image, orientation, factor = 30):
         kernel_h = np.copy(kernel_v)
         kernel_h[int((kernel_size - 1)/2), :] = np.ones(kernel_size)
         kernel_h /= kernel_size
-        mb = cv2.filter2D(img, -1, kernel_h)
+        mb = cv2.filter2D(image, -1, kernel_h)
     elif orientation == "vertical":
         kernel_v[:, int((kernel_size - 1)/2)] = np.ones(kernel_size)
         kernel_v /= kernel_size
-        mb = cv2.filter2D(img, -1, kernel_v)
+        mb = cv2.filter2D(image, -1, kernel_v)
     else:
         print("Error! Must select blur orientation: \"vertical\" or \"horizontal\".")
         exit(1)
@@ -56,6 +56,13 @@ def change_colour(img, colour_add):
             if (img_hsv[row][col].any() > 0):
                 img_hsv[row][col] = (img_hsv[row][col] + colour_add)               
     return img_hsv
+
+# Rotate image by arbitrary degree
+def rotate(img, degree):
+    (h, w) = img.shape[:2]
+    (cX, cY) = (w//2, h//2)
+    M = cv2.getRotationMatrix2D((cX, cY), degree, 1.0)
+    return cv2.warpAffine(img, M, (w, h))
 
 def num_to_namestring(num):
     if num < 10:
