@@ -1,3 +1,5 @@
+#from _typeshed import NoneType
+
 import cv2
 import numpy as np
 import pandas as pd
@@ -49,7 +51,18 @@ def write_to_file(image, idx, boxes, label_boxes):
 
 # Function for generation one image
 def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAGGLE_RATIO, bbx_gen="preprocess", noise_mean=0, noise_std=0, motion_blur_factor=1, motion_blur_dir="horizontal"):
-    background = cv2.resize(background, (WIDTH, HIGTH), interpolation=cv2.INTER_AREA)
+    # Crop background to generate unique backgrounds for each image (to augment background)
+    # Nvm this for now, think about it as a possible augmentation
+    if False:
+    #if (background.shape[0] > HIGTH and background.shape[1] > WIDTH):
+        back_low_x = random.randint(0, background.shape[0] - HIGTH - 1)
+        back_high_x = random.randint(back_low_x + HIGTH, background.shape[0]- 1)
+        back_low_y = random.randint(0, background.shape[1] - WIDTH- 1)
+        back_high_y = random.randint(back_low_y + WIDTH, background.shape[1]- 1)
+        background = background[back_low_x:back_high_x][back_low_y:back_high_y] 
+        print(back_low_x, back_low_y, back_high_x, back_high_y)
+        print(background.shape)
+    background = cv2.resize(background, (WIDTH,HIGTH), interpolation=cv2.INTER_AREA)
     back_width = WIDTH
     back_height = HIGTH
     max_index = 400
@@ -71,12 +84,16 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
                 
                 path = os.path.join(DATADIR_RAW,image,filename)
             else:
-                rnd_index = random.randint(1, max_index)
-                filename = helper.num_to_namestring(rnd_index) + ".png"
+                #rnd_index = random.randint(1, max_index)
+                #filename = helper.num_to_namestring(rnd_index) + ".png"
+                #Pick random element from corresponding kaggle directory
+                filename = random.choice(os.listdir(os.path.join(DATADIR_KAGGLE,image)))
                 path = os.path.join(DATADIR_KAGGLE,image,filename)
 
             img = cv2.imread(path)
-
+            if (type(img) == None):
+                print(filename)
+                print(image)
             # Scale image. Want random between maybe 1/20 and 1/5 of image size? 
             lego_height = random.randint(int(HIGTH/15), int(HIGTH/3))
             lego_scale_factor = lego_height/img.shape[0]
@@ -108,11 +125,8 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
             # Select colour from input. Either noo change, random colour or choose a colour
             if (colour == "random"):
                 img = helper.change_colour(img, np.random.randint(0, 255, size=3))
-            elif (colour == "grey"):
-                print("grey")
-            else:
+            elif (colour != "grey"):
                 img = helper.change_colour(img, colour)
-
 
             # Make sure the whole box is within background (could change later if we want half pieces)
             # Note: offset for bounding box
@@ -168,13 +182,13 @@ def build_random_dataset(backgrounds, backdir, images, size_random, label_boxes,
         noise_mean = random.randint(-2, 2)
         noise_std = random.randint(0, 5)
         motion_blur_dir = random.choice(["horizontal", "vertical"])
-        motion_blur_factor = random.randint(1, 10)
+        motion_blur_factor = random.randint(6, 15)
         background = cv2.imread(os.path.join(backdir,background))
         image, boxes = generate_image_from_list(background, elements, colour=colour, kaggle_ratio=kaggle_ratio, bbx_gen="generic")
         # Add augmentation to image afterwards (like blur, noise etc)
 
         if blur:
-            image = helper.blur(image, kernel_size=(3, 3))
+            image = helper.blur(image, kernel_size=(5, 5))
 
         # Add desired noise and motion blur
         if noise:
@@ -185,8 +199,8 @@ def build_random_dataset(backgrounds, backdir, images, size_random, label_boxes,
         # Write image to file and add bounding boxes to the list
         label_boxes = write_to_file(image, idx, boxes, label_boxes)
 
-        if (i % 100 == 0):
-            print("Image number: " + str(i) + " finished")
+        if (idx % 100 == 0):
+            print("Image number: " + str(idx) + " finished")
 
         # Always increment index to get unique images
         idx += 1
@@ -214,7 +228,7 @@ def build_simple_dataset(images, size_simple, label_boxes, min_pieces=1, max_pie
         label_boxes = write_to_file(image, idx, boxes, label_boxes)
 
         if (i % 100 == 0):
-            print("Simple image number: " + str(i) + " finished")
+            print("Simple image number: " + str(idx) + " finished")
 
 
         idx = idx + 1
@@ -224,34 +238,43 @@ def build_simple_dataset(images, size_simple, label_boxes, min_pieces=1, max_pie
 # Set up start conditions for generating dataset
 idx = 0
 label_boxes = pd.DataFrame(columns=["Image name", "Label", "X-low", "Y-low", "X-high", "Y-high"])
-images = ["3003", "3004", "3022", "3023"]
+images = ["2540", "3001", "3003", "3004", "3020", "3021", "3022", "3023", "3039", "3660"]
 backgrounds = os.listdir(BACKDIR)
 backgrounds_grey = os.listdir(BACKGREYDIR)
-print(backgrounds)
-print(backgrounds_grey)
+
+# Ten calls, so mult with that
+size_per_call = 1000
 # Call different functions for different type of images
 
 # Images with black background and no blur or noise
-idx, label_boxes = build_simple_dataset(images, 10, label_boxes, idx=idx, min_pieces=10, max_pieces=10, kaggle_ratio=5)
+idx, label_boxes = build_simple_dataset(images, size_per_call, label_boxes, idx=idx, min_pieces=10, max_pieces=10, kaggle_ratio=5)
 
 # No noise or blurring
-idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, 10, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=False, colour="random")
+idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=False, colour="random")
 
 # Only blur (to smooth edges but still have good quality images)
-idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, 10, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=True, motion=False, colour="random")
+idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=True, motion=False, colour="random")
 
 # Motion blur instead
-idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, 10, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=True, colour="grey")
+idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=True, colour="random")
 
 # Images with random background and everything
-idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, 10, label_boxes, idx=idx, kaggle_ratio=5)
-#build_random_dataset(backgrounds, images, 10)
+idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5)
+
+# Images with random background and everything, but no random colour
+idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, colour="grey")
+
 
 # Images with quite simple background and no noise or motion blur (or colour for kaggle)
-idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, 10, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=False, colour="grey")
+idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=False, colour="grey")
 
 # Images with quite simple background and no noise or motion blur, but now random colour
-idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, 10, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=False, colour="random")
+idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=True, motion=False, colour="random")
+
+# Images with quite simple background and noise, but now random colour
+idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=True, blur=True, motion=False, colour="random")
+
+idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=True, blur=True, motion=True, colour="random")
 
 
 # Finally write to csv file
