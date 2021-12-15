@@ -13,12 +13,12 @@ class UniformBrickPlacer(object):
         grid_num = 0
         for i in range(n_grids_width):
             for j in range(n_grids_height):
-                self.grids[0] = {"x":i,"y":j,"num_bricks":0}
+                self.grids[grid_num] = {"x":i,"y":j,"num_bricks":0}
                 self.ready.append(grid_num)
                 grid_num += 1
         self.num_grids = grid_num + 1
 
-    def get_brick_placement(self):
+    def get_brick_placement(self, brick_width, brick_height):
         # Select random from ready
         grid_idx = random.choice(self.ready)
         grid = self.grids[grid_idx]
@@ -29,15 +29,15 @@ class UniformBrickPlacer(object):
         
         # Set x and y coord randomly within grid 
         grid_low_x = grid["x"]*self.grid_width
-        grid_low_y = grid["y"]*self.grid_width
+        grid_low_y = grid["y"]*self.grid_height
         rand_x_frac = random.uniform(0, 1)
         rand_y_frac = random.uniform(0, 1)
-        brick_x = grid_low_x + rand_x_frac*self.grid_width
-        brick_y = grid_low_y + rand_y_frac*self.grid_height
+        brick_x = grid_low_x + random.randint(0, self.grid_width - brick_width)
+        brick_y = grid_low_y + random.randint(0, self.grid_height - brick_height)
 
         # if ready is now empty, reset ready with timeout
         if not self.ready:
             self.ready = self.timeout
             self.timeout = []
                 
-        return (brick_x, brick_y)
+        return (int(brick_x), int(brick_y))

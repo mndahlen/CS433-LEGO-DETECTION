@@ -6,6 +6,7 @@ import pandas as pd
 import os
 import random
 import csv
+from UniformBrickPlacer import UniformBrickPlacer
 #import augment_data as augment_data
 #import generate_brick_bbox as generate_brick_bbox
 ## Program for generating dataset
@@ -30,7 +31,7 @@ WIDTH = 600
 HIGTH = 400
 
 # Specifications for the dataset
-MIN_PER_IMAGE = 1
+MIN_PER_IMAGE = 25
 MAX_PER_IMAGE = 50
 
 # Ratio between kaggle and real
@@ -70,6 +71,9 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
     # Percentage overlap in x- resp y- directions
     max_overlap = 0
     boxes = []
+
+    # Create a brickplacer for uniform distribution of bricks
+    brick_place = UniformBrickPlacer(back_width, back_height, 5,5)
     for image in images:
             # Find random image of the specific piece
             take_kaggle = random.randint(0, kaggle_ratio)
@@ -94,24 +98,17 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
             if (type(img) == None):
                 print(filename)
                 print(image)
-            # Scale image. Want random between maybe 1/20 and 1/5 of image size? 
-            lego_height = random.randint(int(HIGTH/15), int(HIGTH/3))
-            lego_scale_factor = lego_height/img.shape[0]
-            lego_width = int(lego_scale_factor*img.shape[1])
+ 
 
-            dim = (lego_width, lego_height)
-
-            # Augment lego piece
-            img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
             
             # Use preporcessed bounding boxes. Should be fastest, but we can not get arbitrary rotation
             if (bbx_gen=="preprocess"):
                 bbox = bbox.loc[(bbox['filename'] == filename) & (bbox['label'] == int(image))] 
                 # Scale bounding boxes
-                x_low = int(bbox["x_low"]*lego_scale_factor)
-                y_low = int(bbox["y_low"]*lego_scale_factor)
-                x_high = int(bbox["x_high"]*lego_scale_factor)
-                y_high = int(bbox["y_high"]*lego_scale_factor)
+                x_low = int(bbox["x_low"])
+                y_low = int(bbox["y_low"])
+                x_high = int(bbox["x_high"])
+                y_high = int(bbox["y_high"])
 
             elif (bbx_gen=="rotate_image"):
                 # Add choice for rotation
@@ -127,12 +124,31 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
                 img = helper.change_colour(img, np.random.randint(0, 255, size=3))
             elif (colour != "grey"):
                 img = helper.change_colour(img, colour)
+            # Crop image to only include the lego piece
+            img = img[y_low:(y_high+1), x_low:(x_high+1)]
 
+            # Scale image. Want random between maybe 1/10 and 1/5 of image size?
+            min_im_size = min(WIDTH, HIGTH)
+            des_lego_size = random.randint(int(min_im_size/10), int(min_im_size/5))
+
+            # The largest dim of the lego brick should have this size
+            lego_scale_factor = des_lego_size/max(img.shape[0], img.shape[1])
+            im_height = int(img.shape[0]*lego_scale_factor)
+            im_width = int(lego_scale_factor*img.shape[1])
+            dim = (im_width, im_height)
+            #Resize lego piece to work with 
+            #print(lego_scale_factor, im_height, im_width, dim)
+            img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+            x_low =0
+            x_high = img.shape[1]
+            y_low = 0
+            y_high = img.shape[0]
             # Make sure the whole box is within background (could change later if we want half pieces)
             # Note: offset for bounding box
-            offset_x = np.random.randint(0, back_width - x_high)
-            offset_y = np.random.randint(0, back_height - y_high)
-            
+            #offset_x = np.random.randint(0, back_width - x_high)
+            #offset_y = np.random.randint(0, back_height - y_high)
+            (offset_x, offset_y) = brick_place.get_brick_placement(x_high, y_high)
+            #print(offset_x, offset_y)
             # Check that the offset is within boundaries
             overlap = False
             while(overlap):
@@ -152,13 +168,15 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
                     offset_x = np.random.randint(0, back_width - x_high)
                     offset_y = np.random.randint(0, back_height - y_high)
 
-            for col in range(offset_x, offset_x + x_high - x_low):
-                for row in range(offset_y, offset_y + y_high - y_low):
+            for col in range(offset_x, offset_x + x_high ):
+                for row in range(offset_y, offset_y + y_high):
                     # Remap to coordinates for a lego piece
-                    img_col = col - offset_x + x_low
-                    img_row = row - offset_y + y_low
-                    if (img[img_row][img_col].any() > 0):        
-                        background[row][col] = img[img_row][img_col]
+                    img_col = col - offset_x
+                    img_row = row - offset_y 
+                    thresh_hold = 40
+                    if (img[img_row][img_col].max() > thresh_hold):   
+                        #print(img[img_row][img_col].min() > 50)     
+                        background[row][col] = img[img_row][img_col]//2
 
             # Set the bounding box correctly in the background
             x_high = x_high + offset_x - x_low
@@ -171,7 +189,7 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
 
 # List of backgrounds as strings
 # List of images as strings
-def build_random_dataset(backgrounds, backdir, images, size_random, label_boxes, idx=0, kaggle_ratio=10, noise=True, blur=True, motion=True, colour="random"):
+def build_random_dataset(backgrounds, backdir, images, size_random, label_boxes, idx=0, kaggle_ratio=10, noise=True, blur=True, motion=True, colour="random", show=False):
      # Random images
     for i in range(size_random):
         background = random.choice(backgrounds)
@@ -185,6 +203,23 @@ def build_random_dataset(backgrounds, backdir, images, size_random, label_boxes,
         motion_blur_factor = random.randint(6, 15)
         background = cv2.imread(os.path.join(backdir,background))
         image, boxes = generate_image_from_list(background, elements, colour=colour, kaggle_ratio=kaggle_ratio, bbx_gen="generic")
+
+        # Temporary
+        image = cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
+        image = helper.blur(image, kernel_size=(5, 5))
+        image= helper.add_noise(image, 0, 5)
+        # Show the image with bounding boxes
+        if (show):
+            show_im = image.copy()
+            show_im = cv2.cvtColor(show_im, cv2.COLOR_RGBA2GRAY)
+            show_im = helper.blur(show_im, kernel_size=(3, 3))
+            show_im = helper.add_noise(show_im, 0, 5)
+            for box in boxes:
+                show_im = cv2.rectangle(show_im, (box[1], box[2]), (box[3], box[4]), (255,0,0))
+
+            cv2.imshow("result", show_im)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows() 
         # Add augmentation to image afterwards (like blur, noise etc)
 
         if blur:
@@ -223,6 +258,8 @@ def build_simple_dataset(images, size_simple, label_boxes, min_pieces=1, max_pie
         # Generate images
         
         image, boxes = generate_image_from_list(background, elements, colour="grey", kaggle_ratio=kaggle_ratio, bbx_gen="rotate_image")
+       
+    
 
          # Write image to file and add bounding boxes to the list
         label_boxes = write_to_file(image, idx, boxes, label_boxes)
@@ -234,7 +271,48 @@ def build_simple_dataset(images, size_simple, label_boxes, min_pieces=1, max_pie
         idx = idx + 1
     return idx, label_boxes
 
+def gen_big_dataset(label_boxes, idx):
+    # Ten calls, so mult with that
+    size_per_call = 1000
+    # Call different functions for different type of images
 
+    # Images with black background and no blur or noise
+    idx, label_boxes = build_simple_dataset(images, size_per_call, label_boxes, idx=idx, min_pieces=10, max_pieces=10, kaggle_ratio=5)
+
+    # No noise or blurring
+    idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=False, colour="random")
+
+    # Only blur (to smooth edges but still have good quality images)
+    idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=True, motion=False, colour="random")
+
+    # Motion blur instead
+    idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=True, colour="random")
+
+    # Images with random background and everything
+    idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5)
+
+    # Images with random background and everything, but no random colour
+    idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, colour="grey")
+
+
+    # Images with quite simple background and no noise or motion blur (or colour for kaggle)
+    idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=False, colour="grey")
+
+    # Images with quite simple background and no noise or motion blur, but now random colour
+    idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=True, motion=False, colour="random")
+
+    # Images with quite simple background and noise, but now random colour
+    idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=True, blur=True, motion=False, colour="random")
+
+    idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=True, blur=True, motion=True, colour="random")
+
+
+    # Finally write to csv file
+    label_boxes.to_csv(LABELCSV, index=False)
+
+def gen_blur_set(label_boxes, blurKernel=(3,3)):
+    size = 10000
+    idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size, label_boxes, idx=0, kaggle_ratio=10, noise=False, blur=False, motion=False, colour="random", show=False)
 # Set up start conditions for generating dataset
 idx = 0
 label_boxes = pd.DataFrame(columns=["Image name", "Label", "X-low", "Y-low", "X-high", "Y-high"])
@@ -242,43 +320,9 @@ images = ["2540", "3001", "3003", "3004", "3020", "3021", "3022", "3023", "3039"
 backgrounds = os.listdir(BACKDIR)
 backgrounds_grey = os.listdir(BACKGREYDIR)
 
-# Ten calls, so mult with that
-size_per_call = 1000
-# Call different functions for different type of images
-
-# Images with black background and no blur or noise
-idx, label_boxes = build_simple_dataset(images, size_per_call, label_boxes, idx=idx, min_pieces=10, max_pieces=10, kaggle_ratio=5)
-
-# No noise or blurring
-idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=False, colour="random")
-
-# Only blur (to smooth edges but still have good quality images)
-idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=True, motion=False, colour="random")
-
-# Motion blur instead
-idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=True, colour="random")
-
-# Images with random background and everything
-idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5)
-
-# Images with random background and everything, but no random colour
-idx, label_boxes = build_random_dataset(backgrounds, BACKDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, colour="grey")
-
-
-# Images with quite simple background and no noise or motion blur (or colour for kaggle)
-idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=False, motion=False, colour="grey")
-
-# Images with quite simple background and no noise or motion blur, but now random colour
-idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=False, blur=True, motion=False, colour="random")
-
-# Images with quite simple background and noise, but now random colour
-idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=True, blur=True, motion=False, colour="random")
-
-idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size_per_call, label_boxes, idx=idx, kaggle_ratio=5, noise=True, blur=True, motion=True, colour="random")
-
-
-# Finally write to csv file
-label_boxes.to_csv(LABELCSV, index=False)
+## This is dataset v2
+#gen_big_dataset(label_boxes, idx)
+gen_blur_set(label_boxes)
 
 #cv2.imshow("result", img)
 #cv2.waitKey(0)
