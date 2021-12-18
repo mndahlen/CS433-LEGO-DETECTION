@@ -31,8 +31,8 @@ WIDTH = 600
 HIGTH = 400
 
 # Specifications for the dataset
-MIN_PER_IMAGE = 25
-MAX_PER_IMAGE = 50
+MIN_PER_IMAGE = 10
+MAX_PER_IMAGE = 25
 
 # Ratio between kaggle and real
 KAGGLE_RATIO = 10
@@ -83,7 +83,7 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
                 colour = "grey"
                 filename = random.choice(os.listdir(os.path.join(DATADIR_RAW,image)))
                 # Unnice solution, will solve this better later
-                while (filename == 'uncut'):
+                while (not filename.endswith('.png')):
                     filename = random.choice(os.listdir(os.path.join(DATADIR_RAW,image)))
                 
                 path = os.path.join(DATADIR_RAW,image,filename)
@@ -92,13 +92,16 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
                 #filename = helper.num_to_namestring(rnd_index) + ".png"
                 #Pick random element from corresponding kaggle directory
                 filename = random.choice(os.listdir(os.path.join(DATADIR_KAGGLE,image)))
+                while (not filename.endswith('.png')):
+                    filename = random.choice(os.listdir(os.path.join(DATADIR_RAW,image)))
+                
                 path = os.path.join(DATADIR_KAGGLE,image,filename)
 
             img = cv2.imread(path)
             if (type(img) == None):
                 print(filename)
                 print(image)
- 
+            #print(filename)
 
             
             # Use preporcessed bounding boxes. Should be fastest, but we can not get arbitrary rotation
@@ -138,6 +141,15 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
             dim = (im_width, im_height)
             #Resize lego piece to work with 
             #print(lego_scale_factor, im_height, im_width, dim)
+            #print(img.shape)
+            #print(dim)
+            #print(lego_scale_factor)
+            #print()
+            # Unnice solution, but need to solve somehow
+            if (dim[0] == 0 or dim[1] == 0):
+                print(filename)
+                print(dim)
+                continue
             img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
             x_low =0
             x_high = img.shape[1]
@@ -176,7 +188,7 @@ def generate_image_from_list(background, images, colour="grey", kaggle_ratio=KAG
                     thresh_hold = 40
                     if (img[img_row][img_col].max() > thresh_hold):   
                         #print(img[img_row][img_col].min() > 50)     
-                        background[row][col] = img[img_row][img_col]//2
+                        background[row][col] = img[img_row][img_col]
 
             # Set the bounding box correctly in the background
             x_high = x_high + offset_x - x_low
@@ -234,7 +246,7 @@ def build_random_dataset(backgrounds, backdir, images, size_random, label_boxes,
         # Write image to file and add bounding boxes to the list
         label_boxes = write_to_file(image, idx, boxes, label_boxes)
 
-        if (idx % 100 == 0):
+        if (idx % 1 == 0):
             print("Image number: " + str(idx) + " finished")
 
         # Always increment index to get unique images
@@ -264,7 +276,7 @@ def build_simple_dataset(images, size_simple, label_boxes, min_pieces=1, max_pie
          # Write image to file and add bounding boxes to the list
         label_boxes = write_to_file(image, idx, boxes, label_boxes)
 
-        if (i % 100 == 0):
+        if (i % 10 == 0):
             print("Simple image number: " + str(idx) + " finished")
 
 
@@ -311,8 +323,8 @@ def gen_big_dataset(label_boxes, idx):
     label_boxes.to_csv(LABELCSV, index=False)
 
 def gen_blur_set(label_boxes, blurKernel=(3,3)):
-    size = 10000
-    idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size, label_boxes, idx=0, kaggle_ratio=10, noise=False, blur=False, motion=False, colour="random", show=False)
+    size = 100
+    idx, label_boxes = build_random_dataset(backgrounds_grey, BACKGREYDIR, images, size, label_boxes, idx=0, kaggle_ratio=10, noise=False, blur=False, motion=False, colour="grey", show=False)
 # Set up start conditions for generating dataset
 idx = 0
 label_boxes = pd.DataFrame(columns=["Image name", "Label", "X-low", "Y-low", "X-high", "Y-high"])
