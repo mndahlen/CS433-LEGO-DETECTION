@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 
 LABELDIR = 'data/datasets/A/labels/labels.csv'
-SAVELABELDIR = 'data/datasets/A_YOLO_format/labels/all_labels_yolo_format/'
+SAVELABELDIR = 'data/datasets/A_YOLO/labels/all/'
 
 def create_txt_annotations():
 	labels = pd.read_csv(LABELDIR)
@@ -25,6 +25,5 @@ def create_txt_annotations():
 	for image_name in np.unique(labels['Image name']):
 		img_df = labels[labels['Image name'] == image_name][entries]
 		np.savetxt('{}{}.txt'.format(SAVELABELDIR,image_name.replace('.jpeg', '')), img_df.values, fmt=['%d', '%f', '%f', '%f', '%f'])
-
 
 create_txt_annotations()
