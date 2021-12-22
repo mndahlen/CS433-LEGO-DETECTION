@@ -18,7 +18,14 @@ This project was performed as the final course-project in CS-433 at EPFL. For de
 
 
 ## How to run
-**1. Generating dataset**
+**1. Creating directories**
+
+First we need to generate some directories, please navigate to the root directory of this repository and run the following script:
+```
+python3 data/init_directories.py
+```
+
+**2. Generating dataset**
 
 Navigate to the root directory of this repository.
 
@@ -30,7 +37,7 @@ python3 src/main.py
 
 This will generate 10 images of Set_A and Set_B as explained in the report. Configure the main.py script to generate more than 10 images. Note that you have to convert the dataset to a format usable for YOLO before, scripts for this is available in data/datasets/YOLO, however these will need to be modified and you will have to create directories to make it work.
 
-**2. Converting dataset to YOLO format**
+**3. Converting dataset to YOLO format**
 
 Before using the dataset it must be converted to YOLO format: Bounding-boxes are slightly differently labeled and the dataset must be split into train,val,test! After following step 1 above, please run in order the following from the root directory of this repository:
 
@@ -40,10 +47,6 @@ python3 data/datasets/YOLO_converter/partition_dataset.py
 ```
 
 Voila! In data/datasets/A_YOLO you will find Set A in YOLO format. You can do the equivalent (by configuring the two previous scripts) with Set B! Now you are ready to train YOLO! 
-
-**NOTE** 
-
-You need to manually create the directories required for the datasets AND directories for conversion to YOLO format. We excuse ourselves for not scripting this since you rarely run the script for generation of data and conversion to YOLO format. However, for you to run this demo we have already created them.
 
 ## Repository explanation
 ### src
