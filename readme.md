@@ -1,7 +1,7 @@
 # Detection and classification of Lego bricks in a pile of Legos
 
 ## Introduction
-This project was performed as the final course-project in CS-433 at EPFL. For details of the project you are referred to the report which is available in docs/. The main focus of the project was to generate data for training YOLOv5s for detection of lego bricks. Brick types were restricted to: *2540, 3001, 3003, 3004, 3020, 3021, 3022, 3023, 3039, 3660*. As a result two main datasets were generated: 
+This project was performed as the final course-project in CS-433 at EPFL. Report is is available in docs/. The main focus of the project was to generate data for training YOLOv5s for detection of lego bricks. Brick types were restricted to: *2540, 3001, 3003, 3004, 3020, 3021, 3022, 3023, 3039, 3660*. As a result two main datasets were generated: 
 
 - **Set A**: Many colors, bricks randomly placed on background.
 - **Set B**: Grayscale, bricks uniformly placed on background.
