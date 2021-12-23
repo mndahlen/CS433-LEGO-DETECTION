@@ -1,3 +1,7 @@
+"""
+Various helper functions used in the project. 
+"""
+
 import numpy as np
 import cv2
 

@@ -1,6 +1,21 @@
+"""
+Two classes for calculation of coordinates for brick placement:
+- UniformBrickPlacer: Places brick in a uniform, non-overlapping manner(as far as possible).
+- RandomBrickPlacer: Gives a random coordinate from a uniform distribution over the background size.
+
+Both classes use the get_brick_placement(brick_width, brick_height) for calculating placement coordinate.
+"""
+
 import random
 
 class UniformBrickPlacer(object):
+    """
+    Calculates coordinate for placement of brick for a uniform and sparse placement.
+    
+    Explanation:
+    Contains two containers: Ready and Timeout. Grids are in Ready if they can be used for brick placement and in Timeout if they are not ready for brick placement.
+    For a start all grids are ready. But grids are placed in timeout when they have been used. Once Ready is empty it will be refilled with all grids in timeout.
+    """
     def __init__(self, width, height, n_grids_width, n_grids_height):
         self.grid_width = width/n_grids_width
         self.grid_height = height/n_grids_height
@@ -46,4 +61,8 @@ class RandomBrickPlacer(object):
         self.height = height
 
     def get_brick_placement(self, brick_width, brick_height):
+        """
+            Note that brick_width, brick_height are in this method to be compatible with the usage 
+            of the corresponding method in UniformBrickPlacer.
+        """
         return (random.randint(0,self.width),random.randint(0,self.height))

@@ -1,3 +1,7 @@
+"""
+Inits directories for datasets. This is mainly for use in the readme demo!
+"""
+
 import os
 
 A_MAIN = "data/datasets/A"

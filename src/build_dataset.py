@@ -1,3 +1,10 @@
+"""
+Module with primary functions for building dataset:
+    - build_dataset(): Iterates over chosen dataset size, generating dataset images (Backgrounds with brick cutouts).
+    - generate_image_from_list():  Takes ONE background image and places brick cutouts on it.
+    - write_to_file(): Saves image.
+"""
+
 import cv2
 import pandas as pd
 import numpy as np
@@ -6,7 +13,6 @@ import random
 from BrickPlacer import RandomBrickPlacer, UniformBrickPlacer
 import helpers as helper
 
-# Helper for saving images and appending to list of boxes
 def generate_image_from_list(background, back_width, back_height, images, raw_piece_dir, synt_piece_dir, synt_ratio, colour="grey", rotation=0, placement_style="uniform"):
     # Fit to desired input size 
     background = cv2.resize(background, (back_width, back_height), interpolation=cv2.INTER_AREA)
@@ -112,8 +118,7 @@ def write_to_file(image, write_dir, idx, boxes, label_boxes):
                                         "X-high":box[3],"Y-high":box[4]}, ignore_index=True)
     return label_boxes          # The label-boxes will go on through the entire dataset
 
-def build_dataset(backdir, images, synt_image_dir, raw_image_dir, size,
-                    min_per_image, max_per_image, write_dir, idx=0, 
+def build_dataset(backdir, images, synt_image_dir, raw_image_dir, size, write_dir, idx=0, 
                     synt_ratio=10, back_width=600, back_height=400, colour="grey", rotation=0,placement_style="uniform"):
     """
     List of backgrounds as strings
@@ -132,9 +137,6 @@ def build_dataset(backdir, images, synt_image_dir, raw_image_dir, size,
         # Pick one background for this image
         background = random.choice(backgrounds)
         background = cv2.imread(os.path.join(backdir,background))
-        # Decide how many pieces in this image
-        num_of_elements = random.randint(min_per_image, max_per_image)
-        elements = random.choices(images, k=num_of_elements)    # Pick images at random
 
         # Generate one image
         image, boxes = generate_image_from_list(background, back_width, back_height, 

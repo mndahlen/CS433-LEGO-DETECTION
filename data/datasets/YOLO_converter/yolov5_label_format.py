@@ -1,8 +1,9 @@
-import os
+"""
+This model converts our generated dataset to YOLO format.
+"""
+
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image, ImageDraw
 
 LABELDIR = 'data/datasets/A/labels/labels.csv'
 SAVELABELDIR = 'data/datasets/A_YOLO/labels/all/'
@@ -10,8 +11,8 @@ SAVELABELDIR = 'data/datasets/A_YOLO/labels/all/'
 def create_txt_annotations():
 	labels = pd.read_csv(LABELDIR)
 
-	# yolov5 needs .txt file for each image with one line per bounding box
-	# each line must be in the following format: [category integer 0 indexed] x_center y_center width height
+	# Yolov5 needs .txt file for each image with one line per bounding box
+	# Each line must be in the following format: [category integer 0 indexed] x_center y_center width height
 	labels['x_center'] = (labels['X-high'] + labels['X-low']) / (2 * 600)
 	labels['y_center'] = (labels['Y-high'] + labels['Y-low']) / (2 * 400)
 	labels['width'] = (labels['X-high'] - labels['X-low']) / 600

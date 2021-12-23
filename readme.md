@@ -7,13 +7,11 @@ This project was performed as the final course-project in CS-433 at EPFL. For de
 - **Set B**: Grayscale, bricks uniformly placed on background.
 
 **Detecting bricks in a sparse setting using YOLO trained on Set A**
-
-<img src="docs/figures/set_A_sparse.jpg" width="600">
+![ScreenShot](docs/figures/set_A_sparse.jpg)
 
 \
 **Detecting bricks in a tight setting using YOLO trained on Set B**
-
-<img src="docs/figures/set_B_benchmark.jpg" width="600">
+![ScreenShot](docs/figures/set_B_benchmark.jpg)
 
 
 

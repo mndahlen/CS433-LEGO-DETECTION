@@ -1,4 +1,7 @@
-# Read images from a directory and augment each of them as desired
+"""
+Read images from a directory and augment using noise, blur, motion blur and grayscale conversion.
+"""
+
 import cv2
 import os
 import helpers as helper
