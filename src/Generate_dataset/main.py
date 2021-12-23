@@ -28,4 +28,4 @@ build.build_dataset(BACKGROUNDIR, PIECES, DATADIR_SYNTHETIC, DATADIR_RAW, SIZE, 
 # Augment the constructed dataset
 augment.augment_dataset(WRITEDIR, add_noise=False, add_blur=False, 
                     add_motion_blur=True, to_black_and_white=True, noise_mean=0, noise_std=0, 
-                    blur_kernel=(1,1), motion_blur_dir="horizontal", motion_blur_factor=10, overwrite=False)
+                    blur_kernel=(3,3), motion_blur_dir="horizontal", motion_blur_factor=10, overwrite=False)
