@@ -1,7 +1,7 @@
 # Detection and classification of Lego bricks in a pile of Legos
 
 ## Introduction
-This project was performed as the final course-project in CS-433 at EPFL. Report is is available in docs/. The main focus of the project was to generate data for training YOLOv5s for detection of lego bricks. Brick types were restricted to: *2540, 3001, 3003, 3004, 3020, 3021, 3022, 3023, 3039, 3660*. As a result two main datasets were generated: 
+This project was performed as the final course-project in CS433 at EPFL. **Report is available in docs/**. The main focus of the project was to generate data for training YOLOv5s for detection of lego bricks. Brick types were restricted to: *2540, 3001, 3003, 3004, 3020, 3021, 3022, 3023, 3039, 3660*. As a result two main datasets were generated: 
 
 - **Set A**: Many colors, bricks randomly placed on background.
 - **Set B**: Grayscale, bricks uniformly placed on background.
@@ -10,7 +10,7 @@ This project was performed as the final course-project in CS-433 at EPFL. Report
 
 ![set_A_sparse](docs/figures/set_A_sparse.jpg)
 
-\
+
 **Detecting bricks in a tight setting using YOLO trained on Set B**
 
 ![set_B_benchmark](docs/figures/set_B_benchmark.jpg)
@@ -47,7 +47,7 @@ python3 data/datasets/YOLO_converter/partition_dataset.py
 ```
 
 Voila! In data/datasets/A_YOLO you will find Set A in YOLO format. You can do the equivalent (by configuring the two previous scripts) with Set B! Now you are ready to train YOLO! 
-\
+
 ## Notebook for running and training YOLO
 We trained and ran everything considering YOLO on our google colab notebook. We share with you a drive containing Set_A and Set_B aswell as a notebook for training and running YOLO inference:
 
