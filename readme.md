@@ -49,7 +49,7 @@ python3 data/datasets/YOLO_converter/partition_dataset.py
 Voila! In data/datasets/A_YOLO you will find Set A in YOLO format. You can do the equivalent (by configuring the two previous scripts) with Set B! Now you are ready to train YOLO! 
 \
 ## Notebook for running and training YOLO
-We trained and ran everything considering YOLO on our google colab notebook:
+We trained and ran everything considering YOLO on our google colab notebook. We share with you a drive containing Set_A and Set_B aswell as a notebook for training and running YOLO inference:
 
 https://drive.google.com/drive/folders/1Zz0ke4d3GYGTVmUWaBfYlEi7BDfyR9Mv?usp=sharing
 
